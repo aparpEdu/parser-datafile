@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cctype>
 #include <cstdio>
+#include <fstream>
 
 typedef enum TSymbolType {
     intconst, text, semicolon, period, quotas, othersy
@@ -12,13 +13,19 @@ char Spelling[9];
 const int MAXLENGTH = 8;
 int Constant;
 const int MAXINTEGER = 1000000;
+std::ifstream inputFile("/Users/moldovexc/CLionProjects/parserv2/input.txt");
 
-const char* Input = R"(1234;631;"Hello".5678;"course1".)";
-int inputIndex = 0;
+//const char* Input = R"(1234;631;"Hello".5678;"course1"."end".)";
+//int inputIndex = 0;
 
 void GetNextChar() {
-    Char = Input[inputIndex];
-    inputIndex++;
+//    Char = Input[inputIndex];
+//    inputIndex++;
+    if (!inputFile.is_open()) {
+        fprintf(stderr, "Error: Unable to open input file\n");
+        return;
+    }
+    Char = inputFile.get();
 }
 
 void error(const char* message) {
@@ -28,15 +35,22 @@ void error(const char* message) {
 void GetNextSymbol() {
     int digit;
     int k = 0;
-
-    while (Char != '\0' && !isdigit(Char) && Char != '\"' && Char != ';' && Char != '.' && !isalpha(Char)) {
+//
+//    while (Char != '\0' && !isdigit(Char) && Char != '\"' && Char != ';' && Char != '.' && !isalpha(Char)) {
+//        GetNextChar();
+//    }
+//
+//    if (Char == '\0') {
+//        Symbol = othersy;
+//        std::cout << "End of Input" << std::endl;
+//        return;
+//    }
+    while (!inputFile.eof() && !isdigit(Char) && Char != '\"' && Char != ';' && Char != '.' && !isalpha(Char)) {
         GetNextChar();
     }
 
-    if (Char == '\0') {
-        Symbol = othersy;
-        std::cout << "End of Input" << std::endl;
-        return;
+    if (inputFile.eof()) {
+        Char = '\0';
     }
 
     while (Char == ' ') {
@@ -88,7 +102,8 @@ void GetNextSymbol() {
             GetNextChar();
             std::cout << "Semicolon" << std::endl;
         } break;
-        case '\"' : {
+
+        case '\"': {
             Symbol = quotas;
             GetNextChar();
             int insideQuote = 0;
@@ -98,17 +113,22 @@ void GetNextSymbol() {
                 GetNextChar();
             }
             if (Char == '\"') {
+                Spelling[insideQuote] = '\0';
+                std::cout << "String: " << Spelling << std::endl;
                 GetNextChar();
             } else {
                 error("error: String is too long or missing closing double quote");
+                Spelling[insideQuote] = '\0';
+                std::cout << "String: " << Spelling << std::endl;
             }
-            std::cout << "String: " << Spelling << std::endl;
         } break;
+
         default: {
             Symbol = othersy;
+            std::cout << "Unknown Symbol with ASCII value: " << static_cast<int>(Char) << std::endl;
             GetNextChar();
-            std::cout << "Unknown Symbol" << std::endl;
-        } break;
+            break;
+        }
     }
 }
 
@@ -131,10 +151,19 @@ int expect(TSymbol symbol) {
 void Field() {
     if (accept(intconst) || accept(quotas) || accept(text)) {
         return;
-    } else if (Symbol != othersy) {
-        error("field: expects intconst, string, or text");
+    } else if (accept(period)) {
+        accept(quotas); // Check for the string after the period
+        if (Symbol == text) {
+            Field();
+        } else {
+            error("field: expects text after period");
+        }
+    } else {
+        error("field: expects intconst, string, text, or period");
     }
 }
+
+
 
 void Record() {
     Field();
@@ -150,9 +179,11 @@ void DataFile() {
     while (Symbol != othersy) {
         Record();
     }
+    inputFile.close();
 }
 
 int main() {
+
     GetNextChar();
     GetNextSymbol();
     DataFile();
