@@ -102,7 +102,11 @@ void GetNextSymbol() {
             GetNextChar();
             std::cout << "Semicolon" << std::endl;
         } break;
-
+        case '\0': {
+            Symbol = othersy;
+            std::cout << "End of Input" << std::endl;
+            break;
+        }
         case '\"': {
             Symbol = quotas;
             GetNextChar();
@@ -152,7 +156,7 @@ void Field() {
     if (accept(intconst) || accept(quotas) || accept(text)) {
         return;
     } else if (accept(period)) {
-        accept(quotas); // Check for the string after the period
+        accept(quotas);
         if (Symbol == text) {
             Field();
         } else {
