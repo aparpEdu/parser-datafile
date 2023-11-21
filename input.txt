@@ -1,4 +1,2 @@
-1234;
-631;
-"Hello".5678;
-"course1"."end".
+1234;"hello";631.23232;"Hello".5678;"course1"."end".
+444;"frodo";222.1111;"eastwood".2233;"clint"."end".

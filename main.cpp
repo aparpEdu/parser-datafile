@@ -15,12 +15,10 @@ int Constant;
 const int MAXINTEGER = 1000000;
 std::ifstream inputFile("/Users/moldovexc/CLionProjects/parserv2/input.txt");
 
-//const char* Input = R"(1234;631;"Hello".5678;"course1"."end".)";
-//int inputIndex = 0;
+
 
 void GetNextChar() {
-//    Char = Input[inputIndex];
-//    inputIndex++;
+
     if (!inputFile.is_open()) {
         fprintf(stderr, "Error: Unable to open input file\n");
         return;
@@ -35,16 +33,6 @@ void error(const char* message) {
 void GetNextSymbol() {
     int digit;
     int k = 0;
-//
-//    while (Char != '\0' && !isdigit(Char) && Char != '\"' && Char != ';' && Char != '.' && !isalpha(Char)) {
-//        GetNextChar();
-//    }
-//
-//    if (Char == '\0') {
-//        Symbol = othersy;
-//        std::cout << "End of Input" << std::endl;
-//        return;
-//    }
     while (!inputFile.eof() && !isdigit(Char) && Char != '\"' && Char != ';' && Char != '.' && !isalpha(Char)) {
         GetNextChar();
     }
@@ -103,8 +91,10 @@ void GetNextSymbol() {
             std::cout << "Semicolon" << std::endl;
         } break;
         case '\0': {
-            Symbol = othersy;
-            std::cout << "End of Input" << std::endl;
+            if (Symbol != othersy) {
+                Symbol = othersy;
+                std::cout << "End of Input" << std::endl;
+            }
             break;
         }
         case '\"': {
@@ -162,10 +152,14 @@ void Field() {
         } else {
             error("field: expects text after period");
         }
-    } else {
-        error("field: expects intconst, string, text, or period");
+    } else if (Symbol != period && Symbol != othersy && Symbol != '\0') {
+        error("field: expects intconst, string, text, period, or end of input");
     }
+
 }
+
+
+
 
 
 
@@ -175,8 +169,16 @@ void Record() {
         accept(period);
         Field();
     }
-    expect(semicolon);
+    if (!(Symbol == semicolon || Symbol == othersy || Symbol == '\0')) {
+        error("record: expects semicolon or end of input after the last field");
+    }
+
+    if (Symbol == semicolon) {
+        accept(semicolon);
+    }
 }
+
+
 
 void DataFile() {
     Record();
@@ -185,6 +187,7 @@ void DataFile() {
     }
     inputFile.close();
 }
+
 
 int main() {
 
